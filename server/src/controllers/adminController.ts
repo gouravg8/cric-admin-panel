@@ -1,5 +1,32 @@
 import type { Request, Response } from "express";
 import { Match, Player, Team, Log } from "../db/schema";
+import { indianPlayers, pakistaniPlayers } from "../db/initData";
+
+async function init(req: Request, res: Response) {
+	try {
+		const players = await Player.find();
+		if (players.length === 0) {
+			const indianPlayersAdd = await Player.insertMany(indianPlayers);
+			const pakistaniPlayersAdd = await Player.insertMany(pakistaniPlayers);
+			res.json({
+				message: "Players added successfully",
+				players: [...indianPlayersAdd, ...pakistaniPlayersAdd],
+			});
+		} else {
+			res.status(200).json({
+				message: "Players already added",
+				players
+			});
+		}
+	} catch (error) {
+		res.status(500).json({
+			message: "Players not added",
+			error: error,
+		});
+	}
+}
+
+
 
 async function adminController(req: Request, res: Response) {
 	try {
@@ -17,26 +44,52 @@ async function adminController(req: Request, res: Response) {
 	}
 }
 
+async function createMatch(req: Request, res: Response) {
+	try {
+		const { matchId, teamA, teamB, matchName, batStriker, batNonStriker, bowler, winningTeam } = req.body;
+		const match = await Match.create({
+			matchId,
+			teamA,
+			teamB,
+			matchName,
+			batStriker,
+			batNonStriker,
+			bowler,
+			winningTeam,
+		});
+		res.status(200).json({
+			message: "Match created successfully",
+			data: match,
+		});
+	} catch (err) {
+		res.status(500).json({
+			message: "Internal server error",
+			error: err,
+		});
+	}
+
+}
+
 async function normalRuns_Overthrow(req: Request, res: Response) {
 	try {
 		const {
-			runs,
+			runs = 0,
 			playerId,
 			bowlerId,
 			teamId,
 			matchId,
 			teamName,
 			extraType,
-			extraRun,
+			extraRun = 0,
 		} = req.body;
 		const batPlayer = await Player.findOneAndUpdate(
 			{ _id: playerId },
-			{ $inc: { haveRuns: runs } },
+			{ $inc: { haveRuns: runs + extraRun } },
 			{ new: true },
 		);
 		const ballPlayer = await Player.findOneAndUpdate(
 			{ _id: bowlerId },
-			{ $inc: { giveRuns: runs } },
+			{ $inc: { giveRuns: runs + extraRun } },
 			{ new: true },
 		);
 		const team = await Team.findOneAndUpdate(
@@ -55,6 +108,7 @@ async function normalRuns_Overthrow(req: Request, res: Response) {
 			over: Math.floor((team?.ball ?? 0) / 6),
 			bowler: ballPlayer?.name,
 			batsman: batPlayer?.name,
+			runs,
 			extras: [
 				{
 					title: extraType,
@@ -223,4 +277,4 @@ async function wicket(req: Request, res: Response) {
 		});
 	}
 }
-export { adminController };
+export { init, adminController, createMatch, normalRuns_Overthrow, bye_ByeOverthrow_LegBy_LegByAndOverThrow, nb_nbOt_nbBye_nbByeOt_nbLbye_nbLbyeOt, wd_wdOt_wdBye_wdByeOt_wdLbye_wdLbyeOt, wicket };

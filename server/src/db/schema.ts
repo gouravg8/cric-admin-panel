@@ -5,11 +5,14 @@ const matchSchema = new Schema({
 	matchId: String,
 	teamA: String,
 	teamB: String,
-	score: Number,
+	score: {
+		type: Number,
+		default: 0,
+	},
 	matchName: String,
 	batStriker: String,
 	batNonStriker: String,
-	bower: String,
+	bowler: String,
 	winningTeam: String,
 });
 
@@ -29,13 +32,34 @@ const playerSchema = new Schema({
 	},
 	isBatsman: Boolean,
 	isBowler: Boolean,
-	maiden: Number,
-	haveRuns: Number,
-	giveRuns: Number,
-	haveFours: Number,
-	haveSixes: Number,
-	haveDotBalls: Number,
-	haveWickets: Number,
+	maiden: {
+		type: Number,
+		default: 0,
+	},
+	haveRuns: {
+		type: Number,
+		default: 0,
+	},
+	giveRuns: {
+		type: Number,
+		default: 0,
+	},
+	haveFours: {
+		type: Number,
+		default: 0,
+	},
+	haveSixes: {
+		type: Number,
+		default: 0,
+	},
+	haveDotBalls: {
+		type: Number,
+		default: 0,
+	},
+	haveWickets: {
+		type: Number,
+		default: 0,
+	},
 	battingStyle: {
 		type: String,
 		enum: ["Right Hand Bat", "Left Hand Bat"],
@@ -59,12 +83,30 @@ const teamSchema = new Schema({
 	matchId: String,
 	teamName: String,
 	players: [String],
-	score: Number,
-	ball: Number,
-	overs: Number,
-	wickets: Number,
-	totalOvers: Number,
-	totalWickets: Number,
+	score: {
+		type: Number,
+		default: 0,
+	},
+	ball: {
+		type: Number,
+		default: 0,
+	},
+	overs: {
+		type: Number,
+		default: 0,
+	},
+	wickets: {
+		type: Number,
+		default: 0,
+	},
+	totalOvers: {
+		type: Number,
+		default: 0,
+	},
+	totalWickets: {
+		type: Number,
+		default: 0,
+	},
 	extras: [
 		{
 			title: {
@@ -88,14 +130,26 @@ const logSchema = new Schema({
 				type: Date,
 				default: Date.now(),
 			},
-			ball: Number,
-			over: Number,
+			ball: {
+				type: Number,
+				default: 0,
+			},
+			over: {
+				type: Number,
+				default: 0,
+			},
 			ballByBall: String,
 			bowler: String,
 			batsman: String,
 			nonStriker: String,
-			runs: Number,
-			wickets: Number,
+			runs: {
+				type: Number,
+				default: 0,
+			},
+			wickets: {
+				type: Number,
+				default: 0,
+			},
 			wicketType: {
 				type: String,
 				enum: ["c", "b", "st", "ro", "p"],
