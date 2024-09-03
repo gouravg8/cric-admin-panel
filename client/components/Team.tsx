@@ -10,7 +10,7 @@ const Team = () => {
           <AvatarImage src="https://github.com/shadcn.png" />
           <AvatarFallback>CN</AvatarFallback>
         </Avatar>
-        <div className="text-sm">
+        <div className="text-xs mt-4">
           <span>433</span> / <span>4</span>
         </div>
         <div>
