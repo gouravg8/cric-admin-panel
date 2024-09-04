@@ -1,79 +1,78 @@
 "use client";
-import React from "react";
-import { Textarea } from "@/components/ui/textarea";
-
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import React, { useEffect, useState } from "react";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { currentPlayerPlaying, runBoardState } from "@/states/state";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 
 const FormSchema = z.object({
-  bio: z
-    .string()
-    .min(10, {
-      message: "Bio must be at least 10 characters.",
-    })
-    .max(160, {
-      message: "Bio must not be longer than 30 characters.",
-    }),
+  areaData: z.string().min(10, {
+    message: "Data must be at least 10 characters.",
+  }),
 });
 
 function RunsArea() {
-  // * TODO: ADD ZOD
-  const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
-  });
+  const [runBoardArea, setRunBoardArea] = useState<any>([]);
 
-  function onSubmit(data: z.infer<typeof FormSchema>) {
-    //     toast({
-    //       title: "You submitted the following values:",
-    //       description: (
-    //         <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-    //           <code className="text-white">{JSON.stringify(data, null, 2)}</code>
-    //         </pre>
-    //       ),
-    //     });
+  const [typeAndValueRecoil, setTypeAndValueRecoil] =
+    useRecoilState(runBoardState);
+  const currentPlayerPlay = useRecoilValue(currentPlayerPlaying);
+
+  function onSubmit(e: any) {
+    e.preventDefault();
+    if (
+      currentPlayerPlay.striker === "" ||
+      currentPlayerPlay.nonStriker === "" ||
+      currentPlayerPlay.bowler === ""
+    ) {
+      alert("Please select a player to play");
+      return;
+    }
+    console.log(runBoardArea);
+    setRunBoardArea([]);
+    setTypeAndValueRecoil([
+      {
+        extraType: "",
+        value: -1,
+      },
+    ]);
   }
 
+  useEffect(() => {
+    let filteredData = typeAndValueRecoil.filter(
+      (item: any) => item.extraType !== "" && item.value !== -1
+    );
+    setRunBoardArea(filteredData);
+  }, [typeAndValueRecoil]);
+
   return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="w-10/12 space-y-6 items-center  "
-      >
-        <FormField
-          control={form.control}
-          name="bio"
-          render={({ field }) => (
-            <FormItem>
-              {/* <FormLabel>Runs to add</FormLabel> */}
-              <FormControl>
-                <Textarea
-                  rows={8}
-                  placeholder="All runs will be added here to the runs area"
-                  className="resize-none "
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button type="submit" className="float-right w-full">
-          Submit
-        </Button>
-      </form>
-    </Form>
+    <div className="w-10/12 space-y-6 items-center">
+      {runBoardArea.length > 0 ? (
+        <div className="flex border gap-3 rounded p-4">
+          {runBoardArea.map((item: { extraType: string; value: number }) => {
+            return (
+              <div
+                key={Math.random() * 100}
+                className="w-fit flex gap-3 text-black bg-gray-200 p-2 rounded"
+              >
+                <span className="text-xs">
+                  {item.extraType}:{item.value}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="flex border gap-3 rounded p-8 text-zinc-400">
+          <p>Runs will be shown over here</p>
+        </div>
+      )}
+
+      <Button onClick={onSubmit} type="submit" className="float-right w-full">
+        Submit
+      </Button>
+    </div>
   );
 }
-
 export default RunsArea;

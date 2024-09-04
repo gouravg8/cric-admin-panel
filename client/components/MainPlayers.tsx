@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 import {
   Select,
@@ -9,44 +9,86 @@ import {
 } from "@/components/ui/select";
 import { TbArrowsExchange } from "react-icons/tb";
 import { Button } from "@/components/ui/button";
+import { useRecoilState, useRecoilValue } from "recoil";
+import { currentPlayerPlaying, playersState } from "@/states/state";
 
 const MainPlayers = () => {
+  const players = useRecoilValue(playersState);
+  const [currentPlayerPlay, setCurrentPlayerPlay] =
+    useRecoilState(currentPlayerPlaying);
+
+  const [strikePlayer, setStrikePlayer] = useState("");
+  const [nonStrikePlayer, setNonStrikePlayer] = useState("");
+  const [bowlerPlayer, setBowlerPlayer] = useState("");
+
+  const availablePlayers = players.indianPlayers.filter(
+    (player) => player !== strikePlayer || player !== nonStrikePlayer
+  );
+
+  const changeStrikerAndNonStriker = () => {
+    setNonStrikePlayer(strikePlayer);
+    setStrikePlayer(nonStrikePlayer);
+  };
+
+  useEffect(() => {
+    if (strikePlayer === nonStrikePlayer) {
+      setStrikePlayer(availablePlayers[0]);
+      setNonStrikePlayer(availablePlayers[1]);
+    }
+  }, [availablePlayers, nonStrikePlayer, strikePlayer]);
+
+  useEffect(() => {
+    setCurrentPlayerPlay({
+      striker: strikePlayer,
+      nonStriker: nonStrikePlayer,
+      bowler: bowlerPlayer,
+    });
+  }, [bowlerPlayer, nonStrikePlayer, setCurrentPlayerPlay, strikePlayer]);
+
   return (
     <div className="flex w-full mx-auto items-center justify-around text-sm md:px-4">
       <div className="flex gap-4 items-center justify-between">
-        <Select>
+        <Select value={strikePlayer} onValueChange={setStrikePlayer}>
           <SelectTrigger className="md:w-[180px]">
             <SelectValue placeholder="Player" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="rohit">Rohit</SelectItem>
-            <SelectItem value="kohli">Kohli</SelectItem>
-            <SelectItem value="raina">Raina</SelectItem>
+            {availablePlayers.map((player: any) => (
+              <SelectItem value={player} key={player}>
+                {player}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
-        <Button>
+
+        <Button onClick={changeStrikerAndNonStriker}>
           <TbArrowsExchange />
         </Button>
-        <Select>
+
+        <Select value={nonStrikePlayer} onValueChange={setNonStrikePlayer}>
           <SelectTrigger className="md:w-[180px]">
             <SelectValue placeholder="Player" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="rohit">Rohit</SelectItem>
-            <SelectItem value="kohli">Kohli</SelectItem>
-            <SelectItem value="raina">Raina</SelectItem>
+            {availablePlayers.map((player: any) => (
+              <SelectItem value={player} key={player}>
+                {player}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
       <div>
-        <Select>
+        <Select onValueChange={(value) => setBowlerPlayer(value)}>
           <SelectTrigger className="md:w-[180px]">
             <SelectValue placeholder="Bowler" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="bumrah">Bumrah</SelectItem>
-            <SelectItem value="kuldeep">Kuldeep</SelectItem>
-            <SelectItem value="jadeja">Jadeja</SelectItem>
+            {players.pakistaniPlayers.map((player: any) => (
+              <SelectItem value={player} key={player}>
+                {player}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>

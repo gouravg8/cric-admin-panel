@@ -5,16 +5,21 @@ const playersState = atom({
     default: { indianPlayers: [], pakistaniPlayers: [] }
 })
 
+const currentPlayerPlaying = atom({
+    key: 'currentPlayerPlaying',
+    default: { striker: "", nonStriker: "", bowler: "" }
+})
+
 const runBoardState = atom({
     key: 'runBoardState',
-    default: { type: "", value: 0 }
+    default: [{ extraType: "", value: -1 }]
 })
 
 const runBoardArea = atom({
     key: 'runBoardArea',
     default: [{
-        type: "",
-        value: 0
+        extraType: "",
+        value: -1
     }]
 })
 
@@ -60,3 +65,13 @@ const commentryState = atom({
         runs: 0,
     }]
 })
+
+export {
+    playersState,
+    runBoardState,
+    currentPlayerPlaying,
+    runBoardArea,
+    scoreBoardState,
+    batsmanState,
+    commentryState
+}
