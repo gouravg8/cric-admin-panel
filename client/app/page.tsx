@@ -8,76 +8,64 @@ import TeamScoreCard from "@/components/TeamScoreCard";
 import { useEffect, useState } from "react";
 import { redirect } from "next/navigation";
 
-import { io } from "socket.io-client";
+// import { socket } from "@/socket";
+import io from "socket.io-client";
 import { useRecoilState } from "recoil";
 import { playersState } from "@/states/state";
 const SERVER_URL = "http://localhost:8000";
 
-// const socket = io();
+// fetch("http://localhost:8000")
+//   .then((res) => res.json())
+//   .then((data) => console.log(data));
+
+// console.log(socket);
 
 export default function Home() {
-  const [matchData, setMatchData] = useState<any>(null);
-  const [playerData, setPlayerData] = useState<any>(null);
-  const [teamData, setTeamData] = useState<any>(null);
-  const [logData, setLogData] = useState<any>(null);
+  const [match, setMatch] = useState(null);
+  const [player, setPlayer] = useState([]);
+  const [team, setTeam] = useState([]);
+  const [log, setLog] = useState([]);
 
   const [playerRecoil, setPlayerRecoil] = useRecoilState(playersState);
 
-  // useEffect(() => {
-  //   socket.on("connect", () => {
-  //     console.log("Connected to server");
-  //   });
+  const [players, setPlayers] = useState([]);
+  // const [isConnected, setIsConnected] = useState(socket.connected);
 
-  //   socket.on("disconnect", () => {
-  //     console.log("Disconnected from server");
-  //   });
-  //   socket.on("matchUpdate", (data) => {
-  //     console.log("Match Update:", data);
-  //     setMatchData(data);
-  //   });
+  useEffect(() => {
+    const socket = io("http://localhost:8000");
+    socket.on("connect", () => {
+      console.log("connected");
+    });
+    socket.on("disconnect", () => {
+      console.log("socket disconnected");
+    });
 
-  //   socket.on("playerUpdate", (data) => {
-  //     console.log("Player Update:", data);
-  //     setPlayerData(data);
-  //   });
-  //   socket.on("teamUpdate", (data) => {
-  //     console.log("Team Update:", data);
-  //     setTeamData(data);
-  //   });
+    socket.on("players", (data) => {
+      console.log("players", data);
+      setPlayers(data);
+    });
 
-  //   socket.on("logUpdate", (data) => {
-  //     console.log("Log Update:", data);
-  //     setLogData(data);
-  //   });
+    socket.emit("message", "Hello from client");
 
-  //   return () => {
-  //     socket.off("matchUpdate");
-  //     socket.off("playerUpdate");
-  //     socket.off("teamUpdate");
-  //     socket.off("logUpdate");
-  //   };
-  // }, []);
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     const matchIdFromStorage = localStorage.getItem("matchId");
     if (matchIdFromStorage) {
-      fetch(SERVER_URL + "/api/match/" + matchIdFromStorage)
-        .then((res) => res.json())
-        .then((data) => {
-          const indianPlayers = data.data.players
-            .filter((player: any) => player.team === "India")
-            .map((player: any) => player.name);
-          const pakistaniPlayers = data.data.players
-            .filter((player: any) => player.team === "Pakistan")
-            .map((player: any) => player.name);
+      const indianPlayers = players
+        .filter((player: any) => player.team === "India")
+        .map((player: any) => player.name);
+      const pakistaniPlayers = players
+        .filter((player: any) => player.team === "Pakistan")
+        .map((player: any) => player.name);
 
-          setPlayerRecoil({
-            indianPlayers: indianPlayers,
-            pakistaniPlayers: pakistaniPlayers,
-          });
-
-          console.log(indianPlayers, pakistaniPlayers);
-        });
+      setPlayerRecoil({
+        indianPlayers: indianPlayers as never[],
+        pakistaniPlayers: pakistaniPlayers as never[],
+      });
     } else {
       // redirect to /match
       redirect("/match");
@@ -89,20 +77,11 @@ export default function Home() {
         pakistaniPlayers: [],
       });
     };
-  }, [setPlayerRecoil]);
+  }, [setPlayerRecoil, players]);
   return (
     <main className="w-full px-4 dark my-4">
-      {/* <div>
-        <h1>Cricket Scoring Dashboard</h1>
-        <h2>Match Data:</h2>
-        <pre>{JSON.stringify(matchData, null, 2)}</pre>
-        <h2>Player Data:</h2>
-        <pre>{JSON.stringify(playerData, null, 2)}</pre>
-        <h2>Team Data:</h2>
-        <pre>{JSON.stringify(teamData, null, 2)}</pre>
-        <h2>Log Data:</h2>
-        <pre>{JSON.stringify(logData, null, 2)}</pre>
-      </div> */}
+      {/* <div>is connected {" " + isConnected}</div> */}
+      {/* <button onClick={() => socket.connect()}>connect</button> */}
 
       <h2 className="w-full text-center md:text-start text-lg py-2 md:px-24">
         Admin Panel

@@ -1,16 +1,11 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { z } from "zod";
+import axios from "axios";
 
 import { Button } from "@/components/ui/button";
 import { currentPlayerPlaying, runBoardState } from "@/states/state";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
-
-const FormSchema = z.object({
-  areaData: z.string().min(10, {
-    message: "Data must be at least 10 characters.",
-  }),
-});
+import findTypeOfBall from "@/lib/findTypeOfBall";
 
 function RunsArea() {
   const [runBoardArea, setRunBoardArea] = useState<any>([]);
@@ -29,7 +24,89 @@ function RunsArea() {
       alert("Please select a player to play");
       return;
     }
-    console.log(runBoardArea);
+    console.log("from run board area", runBoardArea);
+    const [typesOfBall, totalRuns, wicket] = findTypeOfBall(typeAndValueRecoil);
+    console.log("types of ball", typesOfBall, totalRuns, wicket);
+
+    // send data to server to specific route based on type of ball using axios
+    if (typesOfBall === "normal") {
+      try {
+        const matchId = localStorage.getItem("matchId");
+        axios.post(
+          process.env.NEXT_PUBLIC_URL + "/api/admin/normal-and-overthrow",
+          {
+            matchId: matchId,
+            typeOfBall: typesOfBall,
+            wicket: wicket,
+            bowlerId: currentPlayerPlay.bowler,
+            striker: currentPlayerPlay.striker,
+            nonStriker: currentPlayerPlay.nonStriker,
+            extraType: typesOfBall,
+            runs: totalRuns,
+          }
+        );
+      } catch (error) {
+        console.log(error);
+      }
+    } else if (typesOfBall === "bye") {
+      try {
+        const matchId = localStorage.getItem("matchId");
+        axios.post(process.env.NEXT_PUBLIC_URL + "/api/admin/bye-and-extra", {
+          matchId: matchId,
+          bowlerId: currentPlayerPlay.bowler,
+          extraType: typesOfBall,
+          extraRuns: totalRuns,
+          teamId: currentPlayerPlay,
+          playerId: currentPlayerPlay.striker,
+        });
+      } catch (error) {
+        console.log(error);
+      }
+    } else if (typesOfBall === "noball") {
+      try {
+        const matchId = localStorage.getItem("matchId");
+        axios.post(
+          process.env.NEXT_PUBLIC_URL + "/api/admin/noball-and-extra",
+          {
+            matchId: matchId,
+            bowlerId: currentPlayerPlay.bowler,
+            playerId: currentPlayerPlay.striker,
+            extras: typesOfBall,
+            extraRuns: totalRuns,
+            teamId: currentPlayerPlay,
+          }
+        );
+      } catch (error) {
+        console.log(error);
+      }
+    } else if (typesOfBall === "wide") {
+      try {
+        const matchId = localStorage.getItem("matchId");
+        axios.post(process.env.NEXT_PUBLIC_URL + "/api/admin/wide-and-extra", {
+          matchId: matchId,
+          bowlerId: currentPlayerPlay.bowler,
+          playerId: currentPlayerPlay.striker,
+          extras: typesOfBall,
+          extraRuns: totalRuns,
+          teamId: currentPlayerPlay,
+        });
+      } catch (error) {
+        console.log(error);
+      }
+    }else if(typesOfBall === 'wicket'){
+      try {
+        const matchId = localStorage.getItem("matchId");
+        axios.post(process.env.NEXT_PUBLIC_URL + "/api/admin/wicket", {
+          matchId: matchId,
+          bowlerId: currentPlayerPlay.bowler,
+          playerId: currentPlayerPlay.striker,
+          teamId: currentPlayerPlay,
+        });
+      } catch (error) {
+        console.log(error);
+      }
+    }
+
     setRunBoardArea([]);
     setTypeAndValueRecoil([
       {

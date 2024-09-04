@@ -24,6 +24,7 @@ const AddRuns = () => {
     { label: "Wide", value: "wide" },
     { label: "No Ball", value: "noball" },
     { label: "Bye", value: "bye" },
+    { label: "Wicket", value: "wicket" },
   ];
 
   const typesOfExtra = [
@@ -64,7 +65,10 @@ const AddRuns = () => {
   };
 
   const addRunsToArea = () => {
-    if (typeAndValue.extraType === "" || typeAndValue.value === -1) {
+    if (
+      typeAndValue.extraType !== "wicket" &&
+      (typeAndValue.extraType === "" || typeAndValue.value === -1)
+    ) {
       alert("Please select a type of ball and value");
       return;
     } else {
