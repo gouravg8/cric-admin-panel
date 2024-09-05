@@ -3,17 +3,17 @@ import { MatchDocument, PlayerDocument, TeamDocument, LogDocument } from "./sche
 
 // Match Schema
 const matchSchema = new Schema<MatchDocument>({
-	matchId: { type: String, unique: true }, // Unique identifier for the match
-	teamA: { type: String, required: true }, // Name of Team A
-	teamB: { type: String, required: true }, // Name of Team B
-	currentOver: { type: Number, default: 0 }, // Current over in the match
-	currentBall: { type: Number, default: 0 }, // Current ball in the over
-	bowler: { type: String }, // Name of the current bowler
-	batStriker: { type: String }, // Name of the current batsman
+	matchId: { type: String, unique: true },
+	teamA: { type: String, required: true },
+	teamB: { type: String, required: true },
+	currentOver: { type: Number, default: 0 },
+	currentBall: { type: Number, default: 0 },
+	bowler: { type: String },
+	batStriker: { type: String },
 	batNonStriker: { type: String },
 	extras: { type: Number },
-	winningTeam: { type: String, default: "" }, // Winning team, if the match is completed
-	oversPlayed: { type: Number, default: 0 },
+	winningTeam: { type: String, default: "" },
+	oversPlayed: { type: Number, default: 0 },//do not use
 	ballsInCurrentOver: { type: Number, default: 0 },
 	score: { type: Number, default: 0 }
 });
@@ -22,28 +22,28 @@ const matchSchema = new Schema<MatchDocument>({
 
 // Player Schema
 const playerSchema = new Schema<PlayerDocument>({
-	matchId: { type: String, required: true }, // Reference to the match
-	teamName: { type: String, required: true }, // Reference to the team
-	playerName: { type: String, required: true }, // Name of the player
-	runs: { type: Number, default: 0 }, // Runs scored by the player
-	ballsPlayed: { type: Number, default: 0 }, // Balls faced by the player
-	fours: { type: Number, default: 0 }, // Number of fours hit
-	sixes: { type: Number, default: 0 }, // Number of sixes hit
-	wickets: { type: Number, default: 0 }, // Number of wickets taken (if bowler)
-	oversBowled: { type: Number, default: 0 }, // Overs bowled (if bowler)
+	teamName: { type: String, required: true },
+	playerName: { type: String, required: true },
+	runs: { type: Number, default: 0 },
+	ballsPlayed: { type: Number, default: 0 },
+	fours: { type: Number, default: 0 },
+	sixes: { type: Number, default: 0 },
+	wickets: { type: Number, default: 0 },
+	oversBowled: { type: Number, default: 0 },
 	runsGiven: { type: Number, default: 0 }, // Runs given while bowling (if bowler)
-	isOut: { type: Boolean, default: false }, // If the player is out
-	battingPosition: { type: Number }, // Batting position of the player
+	isOut: { type: Boolean, default: false },
+	battingPosition: { type: Number },
 });
 
 
 // Team Schema
 const teamSchema = new Schema<TeamDocument>({
-	matchId: { type: String, required: true }, // Unique ID for each match
-	teamName: { type: String, required: true }, // Name of the team (e.g., India, Pakistan)
-	totalRuns: { type: Number, default: 0 }, // Total runs scored by the team
-	totalWickets: { type: Number, default: 0 }, // Total wickets lost by the team
-	totalOvers: { type: Number, default: 0 }, // Overs played by the team
+	matchId: { type: String, required: true },
+	teamName: { type: String, required: true },
+	totalRuns: { type: Number, default: 0 }, // dont use
+	wicketsOut: { type: Number, default: 10 },
+	totalWickets: { type: Number, default: 0 },
+	totalOvers: { type: Number, default: 0 },
 	players: [
 		{
 			name: { type: String, required: true }, // Player name
@@ -57,17 +57,20 @@ const teamSchema = new Schema<TeamDocument>({
 		legBye: { type: Number, default: 0 },
 	},
 	score: { type: Number, default: 0 },
+	balls: { type: Number, default: 0 },
+	overPlyed: { type: Number, default: 0 }
 });
 
 // Log Schema
 const logSchema = new Schema<LogDocument>({
-	matchId: { type: String, required: true }, // Reference to the match
+	matchId: { type: String, required: true },
 	over: { type: Number }, // Over number
 	ball: { type: Number }, // Ball number
-	bowler: { type: String }, // Bowler name
-	batsman: { type: String }, // Batsman name
+	bowler: { type: String },
+	batsman: { type: String },
 	runs: { type: Number }, // Runs scored on that ball
 	timestamp: { type: Date, default: Date.now }, // Timestamp for sorting
+	wicket: { type: Boolean }, // If a wicket was taken
 });
 
 

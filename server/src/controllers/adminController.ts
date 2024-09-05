@@ -32,16 +32,57 @@ async function init(req: Request, res: Response) {
 		if (players.length === 0) {
 			const indianPlayersAdd = await Player.insertMany(indianPlayers);
 			const pakistaniPlayersAdd = await Player.insertMany(pakistaniPlayers);
-			res.json({
-				message: "Players added successfully",
-				players: [...indianPlayersAdd, ...pakistaniPlayersAdd],
-			});
-		} else {
-			res.status(200).json({
-				message: "Players already added",
-				players
+
+		}
+
+
+		const match = await Match.find({ _id: req.params.matchId });
+		if (match.length === 0) {
+			const match = await Match.create({
+				matchId: req.params.matchId,
+				teamA: 'India',
+				teamB: 'Pakistan',
+				currentOver: 0,
+				currentBall: 0,
+				bowler: '',
+				batStriker: '',
+				nonStriker: '',
+				extras: 0,
+				winningTeam: '',
+				oversPlayed: 0,
+				ballsInCurrentOver: 0,
+				score: 0,
 			});
 		}
+
+		const team = await Team.find({ matchId: req.params.matchId });
+		if (team.length === 0) {
+			const team = await Team.create({
+				matchId: req.params.matchId,
+				teamName: 'India',
+				totalRuns: 0,
+				wicketsOut: 10,
+				totalWickets: 10,
+				totalOvers: 20,
+				players: [],
+				extras: {
+					wide: 0,
+					noBall: 0,
+					legBye: 0,
+					bye: 0,
+					penalty: 0,
+					extraRuns: 0,
+				},
+				score: 0,
+				balls: 0,
+				overPlyed: 0,
+			})
+
+		}
+		res.json({
+			message: "player and match created successfully",
+			players, match, team,
+		});
 	} catch (error) {
 		res.status(500).json({
 			message: "Players not added",
@@ -79,6 +120,7 @@ async function getPlayers(req: Request, res: Response) {
 		});
 	}
 }
+
 async function adminController(req: Request, res: Response) {
 	try {
 		// Get all matches
@@ -121,264 +163,297 @@ async function createMatch(req: Request, res: Response) {
 
 }
 
-// async function normalRuns_Overthrow(req: Request, res: Response) {
-// 	try {
-// 		const {
-// 			matchId,
-// 			extraType,
-// 			extraRun = 0,
-// 			bowlerId,
-// 			runs = 0,
-// 			playerId,
-// 			teamId,
-// 			teamName,
-// 		} = req.body;
-// 		const batPlayer = await Player.findOneAndUpdate(
-// 			{ _id: playerId },
-// 			{ $inc: { haveRuns: runs + extraRun } },
-// 			{ new: true },
-// 		);
-// 		const ballPlayer = await Player.findOneAndUpdate(
-// 			{ _id: bowlerId },
-// 			{ $inc: { giveRuns: runs + extraRun } },
-// 			{ new: true },
-// 		);
-// 		const team = await Team.findOneAndUpdate(
-// 			{ _id: teamId },
-// 			{
-// 				$inc: { score: runs, ball: 1 },
-// 				$push: { extras: { title: extraType, value: extraRun } },
-// 			},
-// 			{ new: true },
-// 		);
-// 		const log = await Log.create({
-// 			matchId,
-// 			team: batPlayer?.teamName,
-// 			teamName,
-// 			ball: team ?? 0,
-// 			over: Math.floor((team?.ball ?? 0) / 6),
-// 			bowler: ballPlayer?.name,
-// 			batsman: batPlayer?.name,
-// 			runs,
-// 			extras: [
-// 				{
-// 					title: extraType,
-// 					value: extraRun,
-// 				},
-// 			],
-// 		});
 
-// 		res.status(200).json({
-// 			data: { batPlayer, ballPlayer, team, log },
-// 			message: "Runs updated successfully",
-// 		});
-// 	} catch (error) {
-// 		res.status(500).json({
-// 			message: "Internal server error",
-// 			error: error,
-// 		});
-// 	}
-// }
-async function normalRuns_Overthrow(req: Request, res: Response) {
-	const { matchId, runs, bowlerName, batsmanName, extraRuns }: {
-		matchId: string,
-		runs: number,
-		bowlerName: string,
-		batsmanName: string,
-		extraRuns: number,
-	} = req.body;
+type NormalRunsOverthrow = {
+	matchId: string;
+	runs: number;
+	bowlerName: string;
+	batsmanName: string;
+	extraRuns: number;
+	fours: number;
+	sixs: number
+};
+
+async function normalRuns_Overthrow({ matchId, runs, bowlerName, batsmanName, extraRuns = 0, fours, sixs }: NormalRunsOverthrow) {
 
 	const totalRuns = runs + extraRuns;
+
 	// Update match
-	const match = await Match.findOneAndUpdate(
-		{ matchId },
-		{
-			$inc: { score: totalRuns, currentBall: 1 },
-			$set: { bowler: bowlerName, batStriker: batsmanName },
-		}
-	);
+	const match = await Match.findOne({ matchId });
+	if (!match) {
+		throw new Error('Match not found');
+	}
+	if (match.ballsInCurrentOver === 6) {
+		match.currentOver += 1;
+		match.ballsInCurrentOver = 0;
+		match.bowler = bowlerName;
+		match.batStriker = batsmanName;
+		await match.save();
+	}
+	if (match.ballsInCurrentOver < 6) {
+		match.ballsInCurrentOver += 1;
+		await match.save();
+	}
+
 
 	// Update player stats
-	await Player.findOneAndUpdate(
-		{ matchId, playerName: batsmanName },
+	const batPlayer = await Player.findOneAndUpdate(
+		{ playerName: batsmanName },
 		{
-			$inc: { runs: runs, ballsPlayed: 1 },
+			$inc: { runs: totalRuns, ballsPlayed: 1, fours, sixs },
 			$set: { isOut: false }
-		}
+		}, { new: true }
 	);
+
+	const batPlayerOut = await Player.find({ teamName: batPlayer?.teamName, runs: { $gte: 1 } });
 
 	// for bowler
-	await Player.findOneAndUpdate(
-		{ matchId, playerName: bowlerName },
-		{ $inc: { runsGiven: runs, oversBowled: 0.1 } }
-	);
+	const bowlerPlayer = await Player.findOneAndUpdate(
+		{ playerName: bowlerName },
+		{ $inc: { runsGiven: totalRuns, oversBowled: 0.1 } }, {
+		new: true,
+	});
 
 	// Update team stats
-	await Team.findOneAndUpdate(
-		{ matchId, teamName: 'teamName' },
-		{ $inc: { totalRuns: runs } }
+	const team = await Team.findOneAndUpdate(
+		{ matchId, teamName: batPlayer?.teamName },
+		{ $inc: { score: totalRuns, balls: 1 } }, { new: true }
 	);
 
 	// Log the delivery
-	await Log.create({
+	const oldLog = await Log.create({
 		matchId,
-		over: match?.oversPlayed,
+		over: match?.currentOver,
 		ball: match?.ballsInCurrentOver,
 		bowler: bowlerName,
 		batsman: batsmanName,
 		runs,
 	});
+	const log = await Log.find({ matchId }).sort({ timestamp: -1 })
+	return { match, batPlayer, batPlayerOut, bowlerPlayer, team, log }
 }
 
 
-
+type ByeByeOverthrowLegByLegByAndOverThrow = {
+	matchId: string;
+	bowlerName: string;
+	extraType: string;
+	extraRuns: number;
+	teamName: string;
+	batsmanName: string;
+};
 async function bye_ByeOverthrow_LegBy_LegByAndOverThrow(
-	req: Request,
-	res: Response,
+	{ extraRuns, batsmanName, bowlerName, matchId, extraType }: ByeByeOverthrowLegByLegByAndOverThrow
 ) {
 	try {
-		const { extraRuns, playerId, bowlerId, teamId, matchId, extraType } =
-			req.body;
+
 		const match = await Match.findOne({ matchId });
-		const batPlayer = await Player.findById(playerId);
-		const ballPlayer = await Player.findById(bowlerId);
-		const team = await Team.findOneAndUpdate(
-			{ _id: teamId },
+		if (!match) {
+			throw new Error('Match not found');
+		}
+		if (match.ballsInCurrentOver === 6) {
+			match.currentOver += 1;
+			match.ballsInCurrentOver = 0;
+			match.bowler = bowlerName;
+			match.batStriker = batsmanName;
+			await match.save();
+		}
+		if (match.ballsInCurrentOver < 6) {
+			match.ballsInCurrentOver += 1;
+			await match.save();
+		}
+
+		const batPlayer = await Player.findOne({ playerName: batsmanName })
+		const ballPlayer = await Player.find({ playerName: bowlerName })
+
+		const batPlayerOut = await Player.find({ teamName: batPlayer?.teamName, runs: { $gte: 1 } });
+
+
+		const teamOld = await Team.findOneAndUpdate(
+			{ teamName: batPlayer?.teamName },
 			{
-				$inc: { score: extraRuns, ball: 1 },
-				$push: { extras: { title: extraType, value: extraRuns } },
+				$inc: { score: extraRuns, ball: 1 }, extras: { $inc: { bye: extraRuns } },
 			},
 			{ new: true },
 		);
-		const log = await Log.create({
+
+
+		// Log the delivery
+		const oldLog = await Log.create({
 			matchId,
-			over: match?.oversPlayed,
+			over: match?.currentOver,
 			ball: match?.ballsInCurrentOver,
-			bowler: ballPlayer?.playerName,
-			batsman: batPlayer?.playerName,
+			bowler: bowlerName,
+			batsman: batsmanName,
 			runs: extraRuns,
 		});
-		res.status(200).json({
-			data: { batPlayer, ballPlayer, team, log },
-			message: "Runs updated successfully",
-		});
+
+		const log = await Log.find({ matchId }).sort({ timestamp: -1 })
+
+		const team = await Team.findOne({ teamName: batPlayer?.teamName });
+		return { match, batPlayer, batPlayerOut, ballPlayer, team, log }
 	} catch (error) {
-		res.status(500).json({
-			message: "Internal server error",
-			error: error,
-		});
+		console.log(error);
 	}
 }
+
+type Nb_nbOt_nbBye_nbByeOt_nbLbye_nbLbyeOt = {
+	matchId: string;
+	extraRuns: number;
+	bowlerName: string;
+	batsmanName: string;
+	extraType: string;
+};
 
 async function nb_nbOt_nbBye_nbByeOt_nbLbye_nbLbyeOt(
-	req: Request,
-	res: Response,
+	{ extraRuns, batsmanName, bowlerName, matchId, extraType }: Nb_nbOt_nbBye_nbByeOt_nbLbye_nbLbyeOt
 ) {
 	try {
-		const { playerId, bowlerId, teamId, matchId, extras, extraRuns } = req.body;
 		const match = await Match.findOne({ matchId });
-		const batPlayer = await Player.findById(playerId);
+
+		const batPlayer = await Player.findOne({ playerName: batsmanName });
 		const ballPlayer = await Player.findOneAndUpdate(
-			{ _id: bowlerId },
+			{ playerName: bowlerName },
 			{ $inc: { giveRuns: extraRuns } },
 			{ new: true },
 		);
-		const team = await Team.findOneAndUpdate(
-			{ _id: teamId },
-			{ $inc: { score: extraRuns }, $push: { extras } },
+		const batPlayerOut = await Player.find({ teamName: batPlayer?.teamName, runs: { $gte: 1 } });
+
+		const teamOld = await Team.findOneAndUpdate(
+			{ teamName: batPlayer?.teamName },
+			{ $inc: { score: extraRuns, }, extras: { $inc: { noBall: 1 } } },
 			{ new: true },
 		);
-		const log = await Log.create({
+		// Log the delivery
+		const oldLog = await Log.create({
 			matchId,
-			over: match?.oversPlayed,
+			over: match?.currentOver,
 			ball: match?.ballsInCurrentOver,
-			bowler: ballPlayer?.playerName,
-			batsman: batPlayer?.playerName,
+			bowler: bowlerName,
+			batsman: batsmanName,
 			runs: extraRuns,
 		});
-		res.status(200).json({
-			data: { batPlayer, ballPlayer, team, log },
-			message: "Runs updated successfully",
-		});
+		const log = await Log.find({ matchId }).sort({ timestamp: -1 })
+
+		const team = await Team.findOne({ teamName: batPlayer?.teamName })
+		return { match, batPlayer, batPlayerOut, ballPlayer, team, log }
 	} catch (error) {
-		res.status(500).json({
-			message: "Internal server error",
-			error: error,
-		});
+		console.log(error);
 	}
 }
 
+type Wd_wdOt_wdBye_wdByeOt_wdLbye_wdLbyeOt = {
+	matchId: string;
+	bowlerName: string;
+	batsmanName: string;
+	extraRuns: number;
+	extraType: string;
+};
 async function wd_wdOt_wdBye_wdByeOt_wdLbye_wdLbyeOt(
-	req: Request,
-	res: Response,
+	{ matchId, extraRuns, extraType, batsmanName, bowlerName, }: Wd_wdOt_wdBye_wdByeOt_wdLbye_wdLbyeOt
 ) {
 	try {
-		const { playerId, bowlerId, teamId, matchId, extras, extraRuns } = req.body;
 		const match = await Match.findOne({ matchId });
-		const batPlayer = await Player.findById(playerId);
+		if (!match) {
+			throw new Error('Match not found');
+		}
+		if (match.ballsInCurrentOver === 6) {
+			match.currentOver += 1;
+			match.ballsInCurrentOver = 0;
+			match.bowler = bowlerName;
+			match.batStriker = batsmanName;
+			await match.save();
+		}
+		if (match.ballsInCurrentOver < 6) {
+			match.ballsInCurrentOver += 1;
+			await match.save();
+		}
+
+		const batPlayer = await Player.findOne({ playerName: batsmanName });
+		const batPlayerOut = await Player.find({ teamName: batPlayer?.teamName, runs: { $gte: 1 } });
+
 		const ballPlayer = await Player.findOneAndUpdate(
-			{ _id: bowlerId },
+			{ playerName: bowlerName },
 			{ $inc: { giveRuns: extraRuns } },
 			{ new: true },
 		);
-		const team = await Team.findOneAndUpdate(
-			{ _id: teamId },
-			{ $inc: { score: extraRuns }, $push: { extras } },
+		const teamOld = await Team.findOneAndUpdate(
+			{ teamName: batPlayer?.teamName },
+			{ $inc: { score: extraRuns }, extras: { $inc: { wide: 1 } } },
 			{ new: true },
 		);
-		const log = await Log.create({
+
+		// Log the delivery
+		const olgLog = await Log.create({
 			matchId,
-			over: match?.oversPlayed,
+			over: match?.currentOver,
 			ball: match?.ballsInCurrentOver,
-			bowler: ballPlayer?.playerName,
-			batsman: batPlayer?.playerName,
+			bowler: bowlerName,
+			batsman: batsmanName,
 			runs: extraRuns,
 		});
-		res.status(200).json({
-			data: { batPlayer, ballPlayer, team, log },
-			message: "Runs updated successfully",
-		});
+		const log = await Log.find({ matchId }).sort({ timestamp: -1 })
+
+		const team = await Team.findOne({ teamName: batPlayer?.teamName })
+		return { match, batPlayer, batPlayerOut, ballPlayer, team, log }
 	} catch (error) {
-		res.status(500).json({
-			message: "Internal server error",
-			error: error,
-		});
+		console.log(error);
 	}
 }
 
-async function wicket(req: Request, res: Response) {
+type WicketType = {
+	wicket: boolean;
+	batsmanName: string;
+	bowlerName: string;
+	matchId: string;
+};
+async function wicket({ wicket, batsmanName, bowlerName, matchId }: WicketType) {
 	try {
-		const { playerId, bowlerId, teamId, matchId, wickets } = req.body;
 		const match = await Match.findOne({ matchId });
-		const batPlayer = await Player.findById(playerId);
+		if (!match) {
+			throw new Error('Match not found');
+		}
+		if (match.ballsInCurrentOver === 6) {
+			match.currentOver += 1;
+			match.ballsInCurrentOver = 0;
+			match.bowler = bowlerName;
+			match.batStriker = batsmanName;
+			await match.save();
+		}
+		if (match.ballsInCurrentOver < 6) {
+			match.ballsInCurrentOver += 1;
+			await match.save();
+		}
+
+		const batPlayer = await Player.findOne({ playerName: batsmanName });
+		const batPlayerOut = await Player.find({ teamName: batPlayer?.teamName, runs: { $gte: 1 } });
+
 		const ballPlayer = await Player.findOneAndUpdate(
-			{ _id: bowlerId },
+			{ playerName: bowlerName },
 			{ $inc: { haveWickets: 1 } },
 			{ new: true },
 		);
 
 		const team = await Team.findOneAndUpdate(
-			{ _id: teamId },
-			{ $inc: { ball: 1, wickets: 1 } },
+			{ teamName: batPlayer?.teamName },
+			{ $inc: { ball: 1, wicketsOut: 1 } },
 			{ new: true },
 		);
-		const log = await Log.create({
+
+		// Log the delivery
+		const oldLog = await Log.create({
 			matchId,
-			over: match?.oversPlayed,
-			ball: match?.ballsInCurrentOver,
-			bowler: ballPlayer?.playerName,
-			batsman: batPlayer?.playerName,
-			wickets: 1,
+			over: match.currentOver,
+			ball: match.ballsInCurrentOver,
+			bowler: bowlerName,
+			batsman: batsmanName,
+			wicket: true,
+			runs: 0,
 		});
-		res.status(200).json({
-			data: { batPlayer, ballPlayer, team, log },
-			message: "Runs updated successfully",
-		});
+		const log = await Log.find({ matchId }).sort({ timestamp: -1 })
+
+		return { match, batPlayer, batPlayerOut, ballPlayer, team, log }
 	} catch (error) {
-		res.status(500).json({
-			message: "Internal server error",
-			error: error,
-		});
+		console.log(error);
 	}
-}
-export { getInitialData, getPlayers, init, adminController, createMatch, normalRuns_Overthrow, bye_ByeOverthrow_LegBy_LegByAndOverThrow, nb_nbOt_nbBye_nbByeOt_nbLbye_nbLbyeOt, wd_wdOt_wdBye_wdByeOt_wdLbye_wdLbyeOt, wicket };
+} export { getInitialData, getPlayers, init, adminController, createMatch, normalRuns_Overthrow, bye_ByeOverthrow_LegBy_LegByAndOverThrow, nb_nbOt_nbBye_nbByeOt_nbLbye_nbLbyeOt, wd_wdOt_wdBye_wdByeOt_wdLbye_wdLbyeOt, wicket };

@@ -38,6 +38,9 @@ type TeamDocument = {
     players: PlayerDocument[];
     extras: number;
     score: number;
+    balls:number;
+    overPlyed:number;
+    wicketsOut:number;
 };
 
 type LogDocument = {
@@ -48,6 +51,7 @@ type LogDocument = {
     bowler: string;
     runs: number;
     timestamp: Date;
+    wicket: boolean;
 };
 
 type Errr = {
