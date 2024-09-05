@@ -1,5 +1,10 @@
 import mongoose, { Schema, model } from "mongoose";
-import { MatchDocument, PlayerDocument, TeamDocument, LogDocument } from "./schemaTypes";
+import type {
+	MatchDocument,
+	PlayerDocument,
+	TeamDocument,
+	LogDocument,
+} from "./schemaTypes";
 
 // Match Schema
 const matchSchema = new Schema<MatchDocument>({
@@ -13,12 +18,10 @@ const matchSchema = new Schema<MatchDocument>({
 	batNonStriker: { type: String },
 	extras: { type: Number },
 	winningTeam: { type: String, default: "" },
-	oversPlayed: { type: Number, default: 0 },//do not use
+	oversPlayed: { type: Number, default: 0 }, //do not use
 	ballsInCurrentOver: { type: Number, default: 0 },
-	score: { type: Number, default: 0 }
+	score: { type: Number, default: 0 },
 });
-
-
 
 // Player Schema
 const playerSchema = new Schema<PlayerDocument>({
@@ -35,7 +38,6 @@ const playerSchema = new Schema<PlayerDocument>({
 	battingPosition: { type: Number },
 });
 
-
 // Team Schema
 const teamSchema = new Schema<TeamDocument>({
 	matchId: { type: String, required: true },
@@ -48,7 +50,7 @@ const teamSchema = new Schema<TeamDocument>({
 		{
 			name: { type: String, required: true }, // Player name
 			isPlaying: { type: Boolean, default: true }, // If the player is currently playing
-		}
+		},
 	],
 	extras: {
 		wide: { type: Number, default: 0 },
@@ -58,7 +60,7 @@ const teamSchema = new Schema<TeamDocument>({
 	},
 	score: { type: Number, default: 0 },
 	balls: { type: Number, default: 0 },
-	overPlyed: { type: Number, default: 0 }
+	overPlyed: { type: Number, default: 0 },
 });
 
 // Log Schema
@@ -72,7 +74,6 @@ const logSchema = new Schema<LogDocument>({
 	timestamp: { type: Date, default: Date.now }, // Timestamp for sorting
 	wicket: { type: Boolean }, // If a wicket was taken
 });
-
 
 const Match = model("Match", matchSchema);
 const Player = model("Player", playerSchema);

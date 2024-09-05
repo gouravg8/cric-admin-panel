@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { Match, Player, Team, Log } from "../db/schema";
 import { indianPlayers, pakistaniPlayers } from "../db/initData";
-import { Transform } from 'node:stream'
+import { Transform } from "node:stream";
 
 // import { io } from "../index";
 
@@ -23,7 +23,6 @@ async function getInitialData(req: Request, res: Response) {
 			error: error,
 		});
 	}
-
 }
 
 async function init(req: Request, res: Response) {
@@ -32,23 +31,21 @@ async function init(req: Request, res: Response) {
 		if (players.length === 0) {
 			const indianPlayersAdd = await Player.insertMany(indianPlayers);
 			const pakistaniPlayersAdd = await Player.insertMany(pakistaniPlayers);
-
 		}
-
 
 		const match = await Match.find({ _id: req.params.matchId });
 		if (match.length === 0) {
 			const match = await Match.create({
 				matchId: req.params.matchId,
-				teamA: 'India',
-				teamB: 'Pakistan',
+				teamA: "India",
+				teamB: "Pakistan",
 				currentOver: 0,
 				currentBall: 0,
-				bowler: '',
-				batStriker: '',
-				nonStriker: '',
+				bowler: "",
+				batStriker: "",
+				nonStriker: "",
 				extras: 0,
-				winningTeam: '',
+				winningTeam: "",
 				oversPlayed: 0,
 				ballsInCurrentOver: 0,
 				score: 0,
@@ -59,7 +56,7 @@ async function init(req: Request, res: Response) {
 		if (team.length === 0) {
 			const team = await Team.create({
 				matchId: req.params.matchId,
-				teamName: 'India',
+				teamName: "India",
 				totalRuns: 0,
 				wicketsOut: 10,
 				totalWickets: 10,
@@ -76,12 +73,13 @@ async function init(req: Request, res: Response) {
 				score: 0,
 				balls: 0,
 				overPlyed: 0,
-			})
-
+			});
 		}
 		res.json({
 			message: "player and match created successfully",
-			players, match, team,
+			players,
+			match,
+			team,
 		});
 	} catch (error) {
 		res.status(500).json({
@@ -105,8 +103,8 @@ async function getPlayers(req: Request, res: Response) {
 				}
 			},
 			flush(callback) {
-				callback(null, ']');
-			}
+				callback(null, "]");
+			},
 		});
 
 		(transformData as any).isWritten = false;
@@ -139,7 +137,16 @@ async function adminController(req: Request, res: Response) {
 
 async function createMatch(req: Request, res: Response) {
 	try {
-		const { matchId, teamA, teamB, matchName, batStriker, batNonStriker, bowler, winningTeam } = req.body;
+		const {
+			matchId,
+			teamA,
+			teamB,
+			matchName,
+			batStriker,
+			batNonStriker,
+			bowler,
+			winningTeam,
+		} = req.body;
 		const match = await Match.create({
 			matchId,
 			teamA,
@@ -160,9 +167,7 @@ async function createMatch(req: Request, res: Response) {
 			error: err,
 		});
 	}
-
 }
-
 
 type NormalRunsOverthrow = {
 	matchId: string;
@@ -171,17 +176,24 @@ type NormalRunsOverthrow = {
 	batsmanName: string;
 	extraRuns: number;
 	fours: number;
-	sixs: number
+	sixs: number;
 };
 
-async function normalRuns_Overthrow({ matchId, runs, bowlerName, batsmanName, extraRuns = 0, fours, sixs }: NormalRunsOverthrow) {
-
+async function normalRuns_Overthrow({
+	matchId,
+	runs,
+	bowlerName,
+	batsmanName,
+	extraRuns = 0,
+	fours,
+	sixs,
+}: NormalRunsOverthrow) {
 	const totalRuns = runs + extraRuns;
 
 	// Update match
 	const match = await Match.findOne({ matchId });
 	if (!match) {
-		throw new Error('Match not found');
+		throw new Error("Match not found");
 	}
 	if (match.ballsInCurrentOver === 6) {
 		match.currentOver += 1;
@@ -195,29 +207,35 @@ async function normalRuns_Overthrow({ matchId, runs, bowlerName, batsmanName, ex
 		await match.save();
 	}
 
-
 	// Update player stats
 	const batPlayer = await Player.findOneAndUpdate(
 		{ playerName: batsmanName },
 		{
 			$inc: { runs: totalRuns, ballsPlayed: 1, fours, sixs },
-			$set: { isOut: false }
-		}, { new: true }
+			$set: { isOut: false },
+		},
+		{ new: true },
 	);
 
-	const batPlayerOut = await Player.find({ teamName: batPlayer?.teamName, runs: { $gte: 1 } });
+	const batPlayerOut = await Player.find({
+		teamName: batPlayer?.teamName,
+		runs: { $gte: 1 },
+	});
 
 	// for bowler
 	const bowlerPlayer = await Player.findOneAndUpdate(
 		{ playerName: bowlerName },
-		{ $inc: { runsGiven: totalRuns, oversBowled: 0.1 } }, {
-		new: true,
-	});
+		{ $inc: { runsGiven: totalRuns, oversBowled: 0.1 } },
+		{
+			new: true,
+		},
+	);
 
 	// Update team stats
 	const team = await Team.findOneAndUpdate(
 		{ matchId, teamName: batPlayer?.teamName },
-		{ $inc: { score: totalRuns, balls: 1 } }, { new: true }
+		{ $inc: { score: totalRuns, balls: 1 } },
+		{ new: true },
 	);
 
 	// Log the delivery
@@ -229,10 +247,9 @@ async function normalRuns_Overthrow({ matchId, runs, bowlerName, batsmanName, ex
 		batsman: batsmanName,
 		runs,
 	});
-	const log = await Log.find({ matchId }).sort({ timestamp: -1 })
-	return { match, batPlayer, batPlayerOut, bowlerPlayer, team, log }
+	const log = await Log.find({ matchId }).sort({ timestamp: -1 });
+	return { match, batPlayer, batPlayerOut, bowlerPlayer, team, log };
 }
-
 
 type ByeByeOverthrowLegByLegByAndOverThrow = {
 	matchId: string;
@@ -242,14 +259,17 @@ type ByeByeOverthrowLegByLegByAndOverThrow = {
 	teamName: string;
 	batsmanName: string;
 };
-async function bye_ByeOverthrow_LegBy_LegByAndOverThrow(
-	{ extraRuns, batsmanName, bowlerName, matchId, extraType }: ByeByeOverthrowLegByLegByAndOverThrow
-) {
+async function bye_ByeOverthrow_LegBy_LegByAndOverThrow({
+	extraRuns,
+	batsmanName,
+	bowlerName,
+	matchId,
+	extraType,
+}: ByeByeOverthrowLegByLegByAndOverThrow) {
 	try {
-
 		const match = await Match.findOne({ matchId });
 		if (!match) {
-			throw new Error('Match not found');
+			throw new Error("Match not found");
 		}
 		if (match.ballsInCurrentOver === 6) {
 			match.currentOver += 1;
@@ -263,20 +283,22 @@ async function bye_ByeOverthrow_LegBy_LegByAndOverThrow(
 			await match.save();
 		}
 
-		const batPlayer = await Player.findOne({ playerName: batsmanName })
-		const ballPlayer = await Player.find({ playerName: bowlerName })
+		const batPlayer = await Player.findOne({ playerName: batsmanName });
+		const ballPlayer = await Player.find({ playerName: bowlerName });
 
-		const batPlayerOut = await Player.find({ teamName: batPlayer?.teamName, runs: { $gte: 1 } });
-
+		const batPlayerOut = await Player.find({
+			teamName: batPlayer?.teamName,
+			runs: { $gte: 1 },
+		});
 
 		const teamOld = await Team.findOneAndUpdate(
 			{ teamName: batPlayer?.teamName },
 			{
-				$inc: { score: extraRuns, ball: 1 }, extras: { $inc: { bye: extraRuns } },
+				$inc: { score: extraRuns, ball: 1 },
+				extras: { $inc: { bye: extraRuns } },
 			},
 			{ new: true },
 		);
-
 
 		// Log the delivery
 		const oldLog = await Log.create({
@@ -288,10 +310,10 @@ async function bye_ByeOverthrow_LegBy_LegByAndOverThrow(
 			runs: extraRuns,
 		});
 
-		const log = await Log.find({ matchId }).sort({ timestamp: -1 })
+		const log = await Log.find({ matchId }).sort({ timestamp: -1 });
 
 		const team = await Team.findOne({ teamName: batPlayer?.teamName });
-		return { match, batPlayer, batPlayerOut, ballPlayer, team, log }
+		return { match, batPlayer, batPlayerOut, ballPlayer, team, log };
 	} catch (error) {
 		console.log(error);
 	}
@@ -305,9 +327,13 @@ type Nb_nbOt_nbBye_nbByeOt_nbLbye_nbLbyeOt = {
 	extraType: string;
 };
 
-async function nb_nbOt_nbBye_nbByeOt_nbLbye_nbLbyeOt(
-	{ extraRuns, batsmanName, bowlerName, matchId, extraType }: Nb_nbOt_nbBye_nbByeOt_nbLbye_nbLbyeOt
-) {
+async function nb_nbOt_nbBye_nbByeOt_nbLbye_nbLbyeOt({
+	extraRuns,
+	batsmanName,
+	bowlerName,
+	matchId,
+	extraType,
+}: Nb_nbOt_nbBye_nbByeOt_nbLbye_nbLbyeOt) {
 	try {
 		const match = await Match.findOne({ matchId });
 
@@ -317,11 +343,14 @@ async function nb_nbOt_nbBye_nbByeOt_nbLbye_nbLbyeOt(
 			{ $inc: { giveRuns: extraRuns } },
 			{ new: true },
 		);
-		const batPlayerOut = await Player.find({ teamName: batPlayer?.teamName, runs: { $gte: 1 } });
+		const batPlayerOut = await Player.find({
+			teamName: batPlayer?.teamName,
+			runs: { $gte: 1 },
+		});
 
 		const teamOld = await Team.findOneAndUpdate(
 			{ teamName: batPlayer?.teamName },
-			{ $inc: { score: extraRuns, }, extras: { $inc: { noBall: 1 } } },
+			{ $inc: { score: extraRuns }, extras: { $inc: { noBall: 1 } } },
 			{ new: true },
 		);
 		// Log the delivery
@@ -333,10 +362,10 @@ async function nb_nbOt_nbBye_nbByeOt_nbLbye_nbLbyeOt(
 			batsman: batsmanName,
 			runs: extraRuns,
 		});
-		const log = await Log.find({ matchId }).sort({ timestamp: -1 })
+		const log = await Log.find({ matchId }).sort({ timestamp: -1 });
 
-		const team = await Team.findOne({ teamName: batPlayer?.teamName })
-		return { match, batPlayer, batPlayerOut, ballPlayer, team, log }
+		const team = await Team.findOne({ teamName: batPlayer?.teamName });
+		return { match, batPlayer, batPlayerOut, ballPlayer, team, log };
 	} catch (error) {
 		console.log(error);
 	}
@@ -349,13 +378,17 @@ type Wd_wdOt_wdBye_wdByeOt_wdLbye_wdLbyeOt = {
 	extraRuns: number;
 	extraType: string;
 };
-async function wd_wdOt_wdBye_wdByeOt_wdLbye_wdLbyeOt(
-	{ matchId, extraRuns, extraType, batsmanName, bowlerName, }: Wd_wdOt_wdBye_wdByeOt_wdLbye_wdLbyeOt
-) {
+async function wd_wdOt_wdBye_wdByeOt_wdLbye_wdLbyeOt({
+	matchId,
+	extraRuns,
+	extraType,
+	batsmanName,
+	bowlerName,
+}: Wd_wdOt_wdBye_wdByeOt_wdLbye_wdLbyeOt) {
 	try {
 		const match = await Match.findOne({ matchId });
 		if (!match) {
-			throw new Error('Match not found');
+			throw new Error("Match not found");
 		}
 		if (match.ballsInCurrentOver === 6) {
 			match.currentOver += 1;
@@ -370,7 +403,10 @@ async function wd_wdOt_wdBye_wdByeOt_wdLbye_wdLbyeOt(
 		}
 
 		const batPlayer = await Player.findOne({ playerName: batsmanName });
-		const batPlayerOut = await Player.find({ teamName: batPlayer?.teamName, runs: { $gte: 1 } });
+		const batPlayerOut = await Player.find({
+			teamName: batPlayer?.teamName,
+			runs: { $gte: 1 },
+		});
 
 		const ballPlayer = await Player.findOneAndUpdate(
 			{ playerName: bowlerName },
@@ -392,10 +428,10 @@ async function wd_wdOt_wdBye_wdByeOt_wdLbye_wdLbyeOt(
 			batsman: batsmanName,
 			runs: extraRuns,
 		});
-		const log = await Log.find({ matchId }).sort({ timestamp: -1 })
+		const log = await Log.find({ matchId }).sort({ timestamp: -1 });
 
-		const team = await Team.findOne({ teamName: batPlayer?.teamName })
-		return { match, batPlayer, batPlayerOut, ballPlayer, team, log }
+		const team = await Team.findOne({ teamName: batPlayer?.teamName });
+		return { match, batPlayer, batPlayerOut, ballPlayer, team, log };
 	} catch (error) {
 		console.log(error);
 	}
@@ -407,11 +443,16 @@ type WicketType = {
 	bowlerName: string;
 	matchId: string;
 };
-async function wicket({ wicket, batsmanName, bowlerName, matchId }: WicketType) {
+async function wicket({
+	wicket,
+	batsmanName,
+	bowlerName,
+	matchId,
+}: WicketType) {
 	try {
 		const match = await Match.findOne({ matchId });
 		if (!match) {
-			throw new Error('Match not found');
+			throw new Error("Match not found");
 		}
 		if (match.ballsInCurrentOver === 6) {
 			match.currentOver += 1;
@@ -426,7 +467,10 @@ async function wicket({ wicket, batsmanName, bowlerName, matchId }: WicketType) 
 		}
 
 		const batPlayer = await Player.findOne({ playerName: batsmanName });
-		const batPlayerOut = await Player.find({ teamName: batPlayer?.teamName, runs: { $gte: 1 } });
+		const batPlayerOut = await Player.find({
+			teamName: batPlayer?.teamName,
+			runs: { $gte: 1 },
+		});
 
 		const ballPlayer = await Player.findOneAndUpdate(
 			{ playerName: bowlerName },
@@ -450,10 +494,22 @@ async function wicket({ wicket, batsmanName, bowlerName, matchId }: WicketType) 
 			wicket: true,
 			runs: 0,
 		});
-		const log = await Log.find({ matchId }).sort({ timestamp: -1 })
+		const log = await Log.find({ matchId }).sort({ timestamp: -1 });
 
-		return { match, batPlayer, batPlayerOut, ballPlayer, team, log }
+		return { match, batPlayer, batPlayerOut, ballPlayer, team, log };
 	} catch (error) {
 		console.log(error);
 	}
-} export { getInitialData, getPlayers, init, adminController, createMatch, normalRuns_Overthrow, bye_ByeOverthrow_LegBy_LegByAndOverThrow, nb_nbOt_nbBye_nbByeOt_nbLbye_nbLbyeOt, wd_wdOt_wdBye_wdByeOt_wdLbye_wdLbyeOt, wicket };
+}
+export {
+	getInitialData,
+	getPlayers,
+	init,
+	adminController,
+	createMatch,
+	normalRuns_Overthrow,
+	bye_ByeOverthrow_LegBy_LegByAndOverThrow,
+	nb_nbOt_nbBye_nbByeOt_nbLbye_nbLbyeOt,
+	wd_wdOt_wdBye_wdByeOt_wdLbye_wdLbyeOt,
+	wicket,
+};
