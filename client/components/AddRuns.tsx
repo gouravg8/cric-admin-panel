@@ -4,7 +4,6 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Button } from "./ui/button";
 import { useSetRecoilState } from "recoil";
 import { runBoardState } from "@/states/state";
-import { set } from "react-hook-form";
 
 type typeAndValueType = {
   extraType: string;

@@ -21,7 +21,14 @@ const MainPlayers = () => {
   const [nonStrikePlayer, setNonStrikePlayer] = useState("");
   const [bowlerPlayer, setBowlerPlayer] = useState("");
 
-  const availablePlayers = players.indianPlayers.filter(
+  const indianPlayerNames = players.indianPlayers.map(
+    (player) => player.playerName
+  );
+  const pakistaniPlayerNames = players.pakistaniPlayers.map(
+    (player) => player.playerName
+  );
+
+  const availablePlayers = indianPlayerNames.filter(
     (player) => player !== strikePlayer || player !== nonStrikePlayer
   );
 
@@ -84,7 +91,7 @@ const MainPlayers = () => {
             <SelectValue placeholder="Bowler" />
           </SelectTrigger>
           <SelectContent>
-            {players.pakistaniPlayers.map((player: any) => (
+            {pakistaniPlayerNames.map((player: any) => (
               <SelectItem value={player} key={player}>
                 {player}
               </SelectItem>

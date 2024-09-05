@@ -9,8 +9,23 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useRecoilValue } from "recoil";
+import { commentryState } from "@/states/state";
+
+type commentryType = {
+  batsman: string;
+  bowler: string;
+  runs: number;
+  over: number;
+};
 
 const Commentry = () => {
+  const commentryRecoil = useRecoilValue(commentryState);
+  const filteredCommentry = commentryRecoil.filter(
+    (commentry: commentryType) =>
+      commentry.batsman !== "" && commentry.bowler !== ""
+  );
+
   const PlayerScore = [
     { batsman: "rohit", bowler: "malinga", run: 34, over: 10 },
     { batsman: "rohit", bowler: "malinga", run: 34, over: 10.3 },
@@ -31,13 +46,15 @@ const Commentry = () => {
             </TableRow>
           </TableHeader>
           <TableBody className="w-full">
-            {PlayerScore.map((player) => (
-              <TableRow key={player.batsman}>
+            {filteredCommentry.map((player) => (
+              <TableRow
+                key={Math.floor(Math.random() * 9999) + "" + player.batsman}
+              >
                 <TableCell className="flex items-center align-middle">
                   <div className="text-black text-xs bg-gray-200 rounded w-[30px] h-[20px] items-center text-center px-1 py-0.5 mr-4">
-                    {player.over}
+                    {player.over}.{player.ball}
                   </div>
-                  {player.bowler} to {player.batsman} : {player.run} runs
+                  {player.bowler} to {player.batsman} : {player.runs} runs
                 </TableCell>
               </TableRow>
             ))}

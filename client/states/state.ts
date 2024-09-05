@@ -1,6 +1,9 @@
 import { atom } from 'recoil';
 
-const playersState = atom({
+type playerType = {
+    playerName: string; teamName: string;
+}
+const playersState = atom<{ indianPlayers: playerType[], pakistaniPlayers: playerType[] }>({
     key: 'playersState',
     default: { indianPlayers: [], pakistaniPlayers: [] }
 })
@@ -32,6 +35,7 @@ const scoreBoardState = atom({
             wickets: 0,
             overs: 0,
             balls: 0,
+            flag: ""
         },
         pakistan: {
             teamName: "Pakistan",
@@ -39,6 +43,7 @@ const scoreBoardState = atom({
             wickets: 0,
             overs: 0,
             balls: 0,
+            flag: ""
         }
     }
 })
@@ -60,7 +65,8 @@ const commentryState = atom({
     key: 'commentryState',
     default: [{
         over: 0.0,
-        baller: "",
+        ball: 0,
+        bowler: "",
         batsman: "",
         runs: 0,
     }]

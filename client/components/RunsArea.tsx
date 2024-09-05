@@ -1,14 +1,24 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 
 import { Button } from "@/components/ui/button";
-import { currentPlayerPlaying, runBoardState } from "@/states/state";
+import {
+  batsmanState,
+  commentryState,
+  currentPlayerPlaying,
+  runBoardState,
+  scoreBoardState,
+} from "@/states/state";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import findTypeOfBall from "@/lib/findTypeOfBall";
+import socket from "@/socket";
 
 function RunsArea() {
   const [runBoardArea, setRunBoardArea] = useState<any>([]);
+  const setScoreBoardState = useSetRecoilState(scoreBoardState);
+  const [batsmanStateRecoil, setBatsmanStateRecoil] =
+    useRecoilState(batsmanState);
+  const setCommentryRecoil = useSetRecoilState(commentryState);
 
   const [typeAndValueRecoil, setTypeAndValueRecoil] =
     useRecoilState(runBoardState);
@@ -24,83 +34,206 @@ function RunsArea() {
       alert("Please select a player to play");
       return;
     }
-    console.log("from run board area", runBoardArea);
-    const [typesOfBall, totalRuns, wicket] = findTypeOfBall(typeAndValueRecoil);
-    console.log("types of ball", typesOfBall, totalRuns, wicket);
 
-    // send data to server to specific route based on type of ball using axios
+    const [typesOfBall, totalRuns, wicket, fours, sixs] =
+      findTypeOfBall(runBoardArea);
+
+    // console.log("types of ball", typesOfBall, totalRuns, wicket);
+
+    socket.on("normalRuns_Overthrow_update", (data: any) => {
+      // console.log(data);
+
+      setScoreBoardState({
+        india: {
+          teamName: "India",
+          score: data.team.score,
+          overs: data.team.overs,
+          balls: data.team.balls,
+          wickets: data.team.wicketsOut,
+          flag: data.team.flag,
+        },
+        pakistan: {
+          teamName: "Pakistan",
+          score: 0,
+          wickets: 0,
+          overs: 0,
+          balls: 0,
+          flag: "https://www.pinclipart.com/picdir/big/136-1361502_pakistan-flag-png-transparent-pakistan-flag-clipart.png",
+        },
+      });
+
+      setBatsmanStateRecoil((prev) => [...data.batPlayerOut]);
+
+      setCommentryRecoil((prev) => [...data.log]);
+      // console.log("normal data from server", data);
+    });
+
+    socket.on("bye_extra_update", (data: any) => {
+      setScoreBoardState({
+        india: {
+          teamName: "India",
+          score: data.team.score,
+          overs: data.team.overs,
+          balls: data.team.balls,
+          wickets: data.team.wicketsOut,
+          flag: data.team.flag,
+        },
+        pakistan: {
+          teamName: "Pakistan",
+          score: 0,
+          wickets: 0,
+          overs: 0,
+          balls: 0,
+          flag: "https://www.pinclipart.com/picdir/big/136-1361502_pakistan-flag-png-transparent-pakistan-flag-clipart.png",
+        },
+      });
+
+      setBatsmanStateRecoil((prev) => [...data.batPlayerOut]);
+
+      setCommentryRecoil((prev) => [...data.log]);
+      // console.log("bye extra data from server", data);
+    });
+
+    socket.on("noball_extra_update", (data: any) => {
+      setScoreBoardState({
+        india: {
+          teamName: "India",
+          score: data.team.score,
+          overs: data.team.overs,
+          balls: data.team.balls,
+          wickets: data.team.wicketsOut,
+          flag: data.team.flag,
+        },
+        pakistan: {
+          teamName: "Pakistan",
+          score: 0,
+          wickets: 0,
+          overs: 0,
+          balls: 0,
+          flag: "https://www.pinclipart.com/picdir/big/136-1361502_pakistan-flag-png-transparent-pakistan-flag-clipart.png",
+        },
+      });
+
+      setBatsmanStateRecoil((prev) => [...data.batPlayerOut]);
+
+      setCommentryRecoil((prev) => [...data.log]);
+
+      // console.log("noball extra data from server", data);
+    });
+
+    socket.on("wide_extra_update", (data: any) => {
+      setScoreBoardState({
+        india: {
+          teamName: "India",
+          score: data.team.score,
+          overs: data.team.overs,
+          balls: data.team.balls,
+          wickets: data.team.wicketsOut,
+          flag: data.team.flag,
+        },
+        pakistan: {
+          teamName: "Pakistan",
+          score: 0,
+          wickets: 0,
+          overs: 0,
+          balls: 0,
+          flag: "https://www.pinclipart.com/picdir/big/136-1361502_pakistan-flag-png-transparent-pakistan-flag-clipart.png",
+        },
+      });
+
+      setBatsmanStateRecoil((prev) => [...data.batPlayerOut]);
+
+      setCommentryRecoil((prev) => [...data.log]);
+
+      // console.log("wide extra data from server", data);
+    });
+
+    socket.on("wicket", (data: any) => {
+      setScoreBoardState({
+        india: {
+          teamName: "India",
+          score: data.team.score,
+          overs: data.team.overs,
+          balls: data.team.balls,
+          wickets: data.team.wicketsOut,
+          flag: data.team.flag,
+        },
+        pakistan: {
+          teamName: "Pakistan",
+          score: 0,
+          wickets: 0,
+          overs: 0,
+          balls: 0,
+          flag: "https://www.pinclipart.com/picdir/big/136-1361502_pakistan-flag-png-transparent-pakistan-flag-clipart.png",
+        },
+      });
+
+      setBatsmanStateRecoil((prev) => [...data.batPlayerOut]);
+
+      setCommentryRecoil((prev) => [...data.log]);
+
+      // console.log("wicket from server", data);
+    });
+
+    // UPDATE ON BALL/MATCH STATE ACC TO TYPE OF BALL
+
+    const matchId = localStorage.getItem("matchId");
     if (typesOfBall === "normal") {
       try {
-        const matchId = localStorage.getItem("matchId");
-        axios.post(
-          process.env.NEXT_PUBLIC_URL + "/api/admin/normal-and-overthrow",
-          {
-            matchId: matchId,
-            typeOfBall: typesOfBall,
-            wicket: wicket,
-            bowlerId: currentPlayerPlay.bowler,
-            striker: currentPlayerPlay.striker,
-            nonStriker: currentPlayerPlay.nonStriker,
-            extraType: typesOfBall,
-            runs: totalRuns,
-          }
-        );
+        socket.emit("normal_and_overthrow", {
+          matchId,
+          runs: totalRuns,
+          bowlerName: currentPlayerPlay.bowler,
+          batsmanName: currentPlayerPlay.striker,
+          fours,
+          sixs,
+        });
       } catch (error) {
         console.log(error);
       }
     } else if (typesOfBall === "bye") {
       try {
-        const matchId = localStorage.getItem("matchId");
-        axios.post(process.env.NEXT_PUBLIC_URL + "/api/admin/bye-and-extra", {
+        socket.emit("bye_and_extra", {
           matchId: matchId,
-          bowlerId: currentPlayerPlay.bowler,
+          bowlerName: currentPlayerPlay.bowler,
           extraType: typesOfBall,
           extraRuns: totalRuns,
-          teamId: currentPlayerPlay,
-          playerId: currentPlayerPlay.striker,
+          batsmanName: currentPlayerPlay.striker,
         });
       } catch (error) {
         console.log(error);
       }
     } else if (typesOfBall === "noball") {
       try {
-        const matchId = localStorage.getItem("matchId");
-        axios.post(
-          process.env.NEXT_PUBLIC_URL + "/api/admin/noball-and-extra",
-          {
-            matchId: matchId,
-            bowlerId: currentPlayerPlay.bowler,
-            playerId: currentPlayerPlay.striker,
-            extras: typesOfBall,
-            extraRuns: totalRuns,
-            teamId: currentPlayerPlay,
-          }
-        );
+        socket.emit("noball_and_extra", {
+          extraRuns: totalRuns,
+          batsmanName: currentPlayerPlay.striker,
+          bowlerName: currentPlayerPlay.bowler,
+          matchId: matchId,
+          extraType: typesOfBall,
+        });
       } catch (error) {
         console.log(error);
       }
     } else if (typesOfBall === "wide") {
       try {
-        const matchId = localStorage.getItem("matchId");
-        axios.post(process.env.NEXT_PUBLIC_URL + "/api/admin/wide-and-extra", {
+        socket.emit("wide_and_extra", {
           matchId: matchId,
-          bowlerId: currentPlayerPlay.bowler,
-          playerId: currentPlayerPlay.striker,
+          bowlerName: currentPlayerPlay.bowler,
+          batsmanName: currentPlayerPlay.striker,
           extras: typesOfBall,
           extraRuns: totalRuns,
-          teamId: currentPlayerPlay,
         });
       } catch (error) {
         console.log(error);
       }
-    }else if(typesOfBall === 'wicket'){
+    } else if (typesOfBall === "wicket") {
       try {
-        const matchId = localStorage.getItem("matchId");
-        axios.post(process.env.NEXT_PUBLIC_URL + "/api/admin/wicket", {
+        socket.emit("wicket", {
           matchId: matchId,
-          bowlerId: currentPlayerPlay.bowler,
-          playerId: currentPlayerPlay.striker,
-          teamId: currentPlayerPlay,
+          batsmanName: currentPlayerPlay.striker,
+          bowlerName: currentPlayerPlay.bowler,
+          wicket: true,
         });
       } catch (error) {
         console.log(error);

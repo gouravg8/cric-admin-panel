@@ -1,9 +1,21 @@
 const findTypeOfBall = (typeAndValueRecoil: any) => {
     let getAllTypesOFBall: string[] = [];
     let totalRuns = 0;
+    let fours = 0;
+    let sixs = 0;
     let wicket = false;
     let typesOfBall: string = "";
     typeAndValueRecoil.forEach((item: any) => {
+        if (item.extraType === "normal") {
+            getAllTypesOFBall.push("normal");
+            if (item.value === 4) {
+                fours += 1;
+            } else if (item.value === 6) {
+                sixs += 1;
+            }
+            totalRuns += item.value;
+            return
+        }
         if (item.extraType === "wide") {
             getAllTypesOFBall.push("wide");
             totalRuns += 1;
@@ -18,31 +30,38 @@ const findTypeOfBall = (typeAndValueRecoil: any) => {
             totalRuns += 1;
         } else if (item.extraType === "overthrow") {
             getAllTypesOFBall.push("ovverthrow");
-            totalRuns += 1;
+            totalRuns += item.value;
         } else if (item.extraType === "byeoverthrow") {
             getAllTypesOFBall.push("byeoverthrow");
-            totalRuns += 1;
+            totalRuns += item.value;
         } else if (item.extraType === "legoverthrow") {
             getAllTypesOFBall.push("legoverthrow");
-            totalRuns += 1;
-        } else if (item.extraType === "normal") {
-            getAllTypesOFBall.push("Normal");
             totalRuns += item.value;
-        }
-        if (item.extraType === "wicket") {
+        } else if (item.extraType === "wicket") {
             wicket = true;
         }
     });
 
-    const findBall = (inp: string) => {
-        return getAllTypesOFBall.find((item) => item === inp)
+    switch (getAllTypesOFBall[0]) {
+        case "wide":
+            typesOfBall = "wide";
+            break;
+        case "normal":
+            typesOfBall = "normal";
+            break;
+        case "noball":
+            typesOfBall = "noball";
+            break;
+        case "bye":
+            typesOfBall = "bye";
+            break;
+        default:
+            typesOfBall = "normal";
+            break;
     }
-    if (findBall("wide")) typesOfBall = "wide";
-    else if (findBall("normal")) typesOfBall = "normal";
-    else if (findBall('bye')) typesOfBall = "bye";
-    else if (findBall('noball')) typesOfBall = "noball";
 
-    return [typesOfBall, totalRuns, wicket];
+
+    return [typesOfBall, totalRuns, wicket, fours, sixs];
 };
 
 export default findTypeOfBall;

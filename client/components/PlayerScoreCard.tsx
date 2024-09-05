@@ -9,52 +9,20 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useRecoilValue } from "recoil";
+import { batsmanState } from "@/states/state";
+
+type PlayerScore = {
+  playerName: string;
+  run: number;
+  ball: number;
+  sixes: number;
+  fours: number;
+};
 
 const PlayerScoreCard = () => {
-  const PlayerScore = [
-    {
-      batsman: "Rohit",
-      run: 34,
-      ball: 10,
-      fours: 4,
-      sixes: 1,
-    },
-    {
-      batsman: "Rohit",
-      run: 34,
-      ball: 10,
-      fours: 4,
-      sixes: 1,
-    },
-    {
-      batsman: "Rohit",
-      run: 34,
-      ball: 10,
-      fours: 4,
-      sixes: 1,
-    },
-    {
-      batsman: "Rohit",
-      run: 34,
-      ball: 10,
-      fours: 4,
-      sixes: 1,
-    },
-    {
-      batsman: "Rohit",
-      run: 34,
-      ball: 10,
-      fours: 4,
-      sixes: 1,
-    },
-    {
-      batsman: "Rohit",
-      run: 34,
-      ball: 10,
-      fours: 4,
-      sixes: 1,
-    },
-  ];
+  const batsmanScoreRecoil = useRecoilValue(batsmanState);
+
   return (
     <div className="w-full">
       <ScrollArea className="h-[215px] w-full rounded-md border p-4">
@@ -70,11 +38,13 @@ const PlayerScoreCard = () => {
             </TableRow>
           </TableHeader>
           <TableBody className="w-full">
-            {PlayerScore.map((player) => (
-              <TableRow key={player.batsman}>
-                <TableCell className="font-medium">{player.batsman}</TableCell>
-                <TableCell>{player.run}</TableCell>
-                <TableCell>{player.ball}</TableCell>
+            {batsmanScoreRecoil.map((player: any) => (
+              <TableRow
+                key={Math.floor(Math.random() * 9999) + "" + player.name}
+              >
+                <TableCell>{player.playerName}</TableCell>
+                <TableCell>{player.runs}</TableCell>
+                <TableCell>{player.balls}</TableCell>
                 <TableCell>{player.fours}</TableCell>
                 <TableCell>{player.sixes}</TableCell>
               </TableRow>
