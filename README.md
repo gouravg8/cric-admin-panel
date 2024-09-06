@@ -2,6 +2,12 @@
 
 This project is a cricket scoring admin panel built using Next.js for the client-side and Node.js for the server-side. It allows administrators to manage cricket matches and update scores in real time.
 
+
+
+https://github.com/user-attachments/assets/2400755c-5fbf-4ad7-bc09-2aa422099907
+
+
+
 ## Table of Contents
 
 - [Prerequisites](#prerequisites)
