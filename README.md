@@ -4,7 +4,7 @@ This project is a cricket scoring admin panel built using Next.js for the client
 
 
 
-https://github.com/user-attachments/assets/2400755c-5fbf-4ad7-bc09-2aa422099907
+https://github.com/user-attachments/assets/8191bd5d-b82b-40f8-9040-d966361bcf79
 
 
 
