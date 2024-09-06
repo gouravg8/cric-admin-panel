@@ -37,21 +37,21 @@ Clone the repository:
 ### Create Environment Variables:
 `i've provided my mongo cluster as a test use`
 ```bash
-    cp .env.example .env    # from root for server
+    cp .example.env .env    # from ./server
 ```
 
 ## Development
 
 ### Running the Server
 ```bash
-    pnpm run dev    # from /server
+    pnpm run dev    # from ./server
 ```
 
 ### Running the client
 ```bash
-    pnpm run dev    # from /client
+    pnpm run dev    # from ./client
 ```
-
+### Go to [http://localhost:3000](http://localhost:3000) to view the client.
 
 ## Tech Stack
 
