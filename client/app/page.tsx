@@ -17,7 +17,7 @@ import {
   playersState,
   scoreBoardState,
 } from "@/states/state";
-const SERVER_URL = "http://localhost:8000";
+// const SERVER_URL = "http://localhost:8000";
 
 export default function Home() {
   const setPlayerRecoil = useSetRecoilState(playersState);
