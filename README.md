@@ -43,7 +43,7 @@ Clone the repository:
 ### Create Environment Variables:
 `i've provided my mongo cluster as a test use`
 ```bash
-    cp .example.env .env    # from ./server
+    cp .example.env .env    # from ./server and from ./client also
 ```
 
 ## Development
